@@ -1,20 +1,13 @@
 # KilaKitu POS 
 
-A full-featured, web-based Point of Sale system built for **KilaKitu Shop, Nairobi, Kenya**.
-Designed for small to medium retail shops managing multiple product categories, staff, inventory and sales reporting — all from a browser.
-
----
-
-## Screenshots
-
-> Login Page · Dashboard · POS Sales · Inventory · Reports · Products · Settings
+A full-featured, web-based POS system built for **KilaKitu Shop, Nairobi, Kenya**.
+Designed for small to medium retail shops managing multiple product categories, inventory and sales reporting all from a browser.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
 | **Frontend** | HTML5, CSS3, Vanilla JavaScript |
 | **Backend** | Node.js, Express.js |
 | **Database** | MySQL (via XAMPP / phpMyAdmin) |
@@ -22,8 +15,6 @@ Designed for small to medium retail shops managing multiple product categories, 
 | **Runtime** | Node.js v18+ |
 
 ---
-
-## Features
 
 ### Point of Sale
 - Fast product search and category filtering
@@ -120,9 +111,6 @@ pos-system/
 └── database/
     ├── schema.sql             # Full database schema + seed data
     └── import_real_data.sql   # Real product data import script
-```
-
----
 
 ## Database Schema
 
