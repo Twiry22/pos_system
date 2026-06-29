@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>KilaKitu — Dashboard</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        .welcome-bar {
+            background: linear-gradient(135deg, var(--bg-card), rgba(201,168,76,0.08));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .welcome-bar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(to right, var(--gold), transparent);
+        }
+        .welcome-text h2 {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .welcome-text p { font-size: 0.85rem; color: var(--text-muted); }
+        .welcome-date { text-align: right; }
+        .welcome-date .date-day {
+            font-family: 'Calibri','Candara','Segoe UI',sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--gold);
+            line-height: 1.2;
+            letter-spacing: 0.04em;
+        }
+        .welcome-date .date-full {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .quick-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .quick-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-glow);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-gold);
+        }
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+        }
+        .stock-alert-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .stock-alert-item:last-child { border-bottom: none; }
+        .stock-product-name { font-size: 0.875rem; color: var(--text-primary); font-weight: 500; margin-bottom: 2px; }
+        .stock-category { font-size: 0.75rem; color: var(--text-muted); }
+        .stock-qty { font-family: 'Calibri','Candara','Segoe UI',sans-serif; font-size: 1.3rem; font-weight: 600; text-align: right; }
+        .stock-qty.out { color: var(--danger); }
+        .stock-qty.low { color: var(--warning); }
+        .category-bar-wrap { margin-bottom: 14px; }
+        .category-bar-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.8rem; }
+        .category-bar-label span:first-child { color: var(--text-secondary); }
+        .category-bar-label span:last-child  { color: var(--gold); font-weight: 500; font-family: 'Calibri','Candara','Segoe UI',sans-serif; }
+        .category-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+        .category-bar-fill  { height: 100%; background: linear-gradient(to right, var(--gold-dim), var(--gold)); border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius);
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @media (max-width: 1100px) {
+            .stats-grid  { grid-template-columns: repeat(2, 1fr); }
+            .bottom-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .quick-actions { grid-template-columns: repeat(2, 1fr); }
+            .welcome-bar   { flex-direction: column; gap: 16px; text-align: center; }
+            .welcome-date  { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">KilaKitu</div>
+            <div class="brand-tagline">Point of Sale</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item active" data-page="dashboard">Dashboard</a>
+            <a href="pos.html"       class="nav-item" data-page="pos">New Sale</a>
+            <div class="nav-section-label" style="margin-top:8px;">Management</div>
+            <a href="inventory.html" class="nav-item" data-page="inventory">
+                Inventory
+                <span class="nav-badge hidden" id="stockAlertBadge">0</span>
+            </a>
+            <a href="products.html"  class="nav-item" data-page="products">Products</a>
+            <a href="reports.html"   class="nav-item" data-page="reports">Reports</a>
+            <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+            <a href="settings.html"  class="nav-item" data-page="settings">Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user" onclick="logout()">
+                <div class="user-avatar" id="sidebarAvatar">A</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUserName">Loading...</div>
+                    <div class="user-role" id="sidebarUserRole">—</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="page-title">Dashboard</div>
+            <div class="flex-center gap-12">
+                <span id="topbarTime" style="font-family:'Calibri','Candara','Segoe UI',sans-serif;font-size:0.85rem;color:var(--text-muted);letter-spacing:0.05em;"></span>
+                <a href="pos.html" class="btn btn-gold btn-sm">+ New Sale</a>
+            </div>
+        </div>
+
+        <div class="page-content page-fade">
+
+            <div class="welcome-bar">
+                <div class="welcome-text">
+                    <h2 id="welcomeMsg">Good morning!</h2>
+                    <p>Here's what's happening at KilaKitu today.</p>
+                </div>
+                <div class="welcome-date">
+                    <div class="date-day" id="dateDay">—</div>
+                    <div class="date-full" id="dateFull">—</div>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card skeleton" style="height:110px;"></div>
+                <div class="stat-card skeleton" style="height:110px;"></div>
+                <div class="stat-card skeleton" style="height:110px;"></div>
+                <div class="stat-card skeleton" style="height:110px;"></div>
+            </div>
+
+            <div class="quick-actions">
+                <a href="pos.html"       class="quick-btn">New Sale</a>
+                <a href="inventory.html" class="quick-btn">Inventory</a>
+                <a href="reports.html"   class="quick-btn">Reports</a>
+                <a href="products.html"  class="quick-btn">Products</a>
+            </div>
+
+            <div class="bottom-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Recent Sales</div>
+                        <a href="reports.html" class="btn btn-ghost btn-sm">View all</a>
+                    </div>
+                    <div class="table-wrap" id="recentSalesWrap">
+                        <div class="text-center" style="padding:40px;"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:20px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Stock Alerts</div>
+                            <a href="inventory.html" class="btn btn-ghost btn-sm">Manage</a>
+                        </div>
+                        <div id="stockAlertsList">
+                            <div class="text-center" style="padding:20px;"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Sales by Category</div>
+                            <span class="text-muted text-sm">This month</span>
+                        </div>
+                        <div id="categoryBars">
+                            <div class="text-center" style="padding:20px;"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

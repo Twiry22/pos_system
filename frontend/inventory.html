@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>KilaKitu — Inventory</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-bar .search-bar { flex: 1; min-width: 200px; }
+
+        .status-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        .status-tab {
+            padding: 7px 16px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .status-tab:hover  { border-color: var(--gold); color: var(--gold); }
+        .status-tab.active { background: var(--gold); border-color: var(--gold); color: #0D0D1A; font-weight: 600; }
+
+        .inv-table-wrap { overflow-x: auto; }
+
+        .stock-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+        .stock-bar-track {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .stock-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+        .stock-bar-fill.ok  { background: var(--success); }
+        .stock-bar-fill.low { background: var(--warning); }
+        .stock-bar-fill.out { background: var(--danger); }
+
+        .qty-display {
+            font-family: 'Calibri','Candara','Segoe UI',sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            min-width: 32px;
+            text-align: right;
+        }
+        .qty-display.ok  { color: var(--success); }
+        .qty-display.low { color: var(--warning); }
+        .qty-display.out { color: var(--danger); }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        /* Restock modal */
+        .restock-product-name {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .restock-current {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .summary-cards { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">KilaKitu</div>
+            <div class="brand-tagline">Point of Sale</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-page="dashboard">Dashboard</a>
+            <a href="pos.html"       class="nav-item" data-page="pos">New Sale</a>
+            <div class="nav-section-label" style="margin-top:8px;">Management</div>
+            <a href="inventory.html" class="nav-item active" data-page="inventory">
+                Inventory
+                <span class="nav-badge hidden" id="stockAlertBadge">0</span>
+            </a>
+            <a href="products.html"  class="nav-item" data-page="products">Products</a>
+            <a href="reports.html"   class="nav-item" data-page="reports">Reports</a>
+            <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+            <a href="settings.html"  class="nav-item" data-page="settings">Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user" onclick="logout()">
+                <div class="user-avatar" id="sidebarAvatar">A</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUserName">Loading...</div>
+                    <div class="user-role" id="sidebarUserRole">—</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="page-title">Inventory</div>
+            <div class="flex-center gap-12">
+                <button class="btn btn-outline btn-sm" onclick="exportCSV()">Download CSV</button>
+                <button class="btn btn-gold btn-sm" onclick="openRestockModal()">+ Restock Product</button>
+            </div>
+        </div>
+
+        <div class="page-content page-fade">
+
+            <!-- Summary cards -->
+            <div class="summary-cards" id="summaryCards">
+                <div class="stat-card skeleton" style="height:100px;"></div>
+                <div class="stat-card skeleton" style="height:100px;"></div>
+                <div class="stat-card skeleton" style="height:100px;"></div>
+                <div class="stat-card skeleton" style="height:100px;"></div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="filter-bar">
+                <div class="search-bar">
+                    <input type="text" class="form-control" id="invSearch"
+                           placeholder="Search products..." oninput="filterInventory()"/>
+                </div>
+                <div class="status-tabs">
+                    <button class="status-tab active" data-status="all"   onclick="setStatusFilter('all', this)">All</button>
+                    <button class="status-tab"        data-status="ok"    onclick="setStatusFilter('ok', this)">In Stock</button>
+                    <button class="status-tab"        data-status="low"   onclick="setStatusFilter('low', this)">Low Stock</button>
+                    <button class="status-tab"        data-status="out"   onclick="setStatusFilter('out', this)">Out of Stock</button>
+                </div>
+                <select class="form-control" id="catFilter" onchange="filterInventory()"
+                        style="width:160px;">
+                    <option value="all">All Categories</option>
+                </select>
+            </div>
+
+            <!-- Inventory table -->
+            <div class="card" style="padding:0;">
+                <div class="inv-table-wrap" id="invTableWrap">
+                    <div class="text-center" style="padding:60px;">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Restock Modal -->
+<div class="modal-overlay hidden" id="restockModal">
+    <div class="modal" style="max-width:440px;">
+        <div class="modal-header">
+            <h3 class="font-display">Restock Product</h3>
+            <button class="modal-close" onclick="closeRestockModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Product</label>
+                <select class="form-control" id="restockProductId" onchange="onRestockProductChange()">
+                    <option value="">— Select product —</option>
+                </select>
+            </div>
+            <div id="restockCurrentInfo" class="restock-current hidden"></div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Quantity to Add</label>
+                <input type="number" class="form-control" id="restockQty"
+                       placeholder="e.g. 50" min="1"/>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Low Stock Alert Threshold</label>
+                <input type="number" class="form-control" id="restockAlert"
+                       placeholder="e.g. 5 (alert when stock falls below this)" min="1"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Note (optional)</label>
+                <input type="text" class="form-control" id="restockNote"
+                       placeholder="e.g. Supplier delivery"/>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeRestockModal()">Cancel</button>
+            <button class="btn btn-gold"    onclick="confirmRestock()">Confirm Restock</button>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div class="modal-overlay hidden" id="adjustModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h3 class="font-display">Adjust Stock</h3>
+            <button class="modal-close" onclick="closeAdjustModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <div class="restock-product-name" id="adjustProductName">—</div>
+            <div class="restock-current" id="adjustCurrentStock">Current stock: —</div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Set Stock To</label>
+                <input type="number" class="form-control" id="adjustQty" min="0" placeholder="New quantity"/>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Low Stock Alert</label>
+                <input type="number" class="form-control" id="adjustAlert" min="1"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Reason</label>
+                <input type="text" class="form-control" id="adjustNote" placeholder="e.g. Stock count correction"/>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeAdjustModal()">Cancel</button>
+            <button class="btn btn-gold"    onclick="confirmAdjust()">Save Adjustment</button>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay hidden" id="historyModal">
+    <div class="modal" style="max-width:560px;">
+        <div class="modal-header">
+            <h3 class="font-display" id="historyProductName">Stock History</h3>
+            <button class="modal-close" onclick="closeHistoryModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <div class="table-wrap" id="historyTableWrap">
+                <div class="text-center" style="padding:40px;"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/inventory.js"></script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>KilaKitu — New Sale</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        .pos-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 0;
+            height: calc(100vh - var(--header-height));
+            overflow: hidden;
+        }
+        .products-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-right: 1px solid var(--border);
+        }
+        .products-toolbar {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--bg-secondary);
+        }
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .cat-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .cat-tab:hover  { border-color: var(--gold); color: var(--gold); }
+        .cat-tab.active { background: var(--gold); border-color: var(--gold); color: #0D0D1A; font-weight: 600; }
+        .products-grid-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .product-card:active { transform: scale(0.97); }
+        .product-card.out-of-stock { opacity: 0.4; cursor: not-allowed; }
+        .product-card.out-of-stock:hover { transform: none; box-shadow: none; }
+        .product-name { font-size: 0.82rem; font-weight: 500; color: var(--text-primary); line-height: 1.3; }
+        .product-price { font-family: 'Calibri','Candara','Segoe UI',sans-serif; font-size: 1rem; font-weight: 600; color: var(--gold); }
+        .product-stock { font-size: 0.7rem; color: var(--text-muted); font-family: 'Calibri','Candara','Segoe UI',sans-serif; }
+        .product-stock.low { color: var(--warning); }
+        .product-stock.out { color: var(--danger); }
+        .product-cat  { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+        .cart-panel { display: flex; flex-direction: column; background: var(--bg-secondary); overflow: hidden; }
+        .cart-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .cart-title  { font-family: var(--font-display); font-size: 1.1rem; font-weight: 500; }
+        .cart-count  { background: var(--gold); color: #0D0D1A; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+        .cart-items  { flex: 1; overflow-y: auto; padding: 12px 16px; }
+        .cart-empty  { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); gap: 12px; }
+        .cart-empty p { font-size: 0.85rem; }
+        .cart-item   { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); animation: slideIn 0.2s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        .cart-item-info  { flex: 1; min-width: 0; }
+        .cart-item-name  { font-size: 0.82rem; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cart-item-price { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; font-family: 'Calibri','Candara','Segoe UI',sans-serif; }
+        .cart-item-qty   { display: flex; align-items: center; gap: 6px; }
+        .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); line-height: 1; }
+        .qty-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .qty-num { font-weight: 600; font-size: 0.9rem; min-width: 20px; text-align: center; color: var(--text-primary); font-family: 'Calibri','Candara','Segoe UI',sans-serif; }
+        .cart-item-total { font-family: 'Calibri','Candara','Segoe UI',sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--gold); min-width: 80px; text-align: right; }
+        .cart-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; padding: 4px 6px; border-radius: 4px; transition: var(--transition); }
+        .cart-remove:hover { color: var(--danger); background: var(--danger-bg); }
+
+        .cart-footer  { padding: 16px 20px; border-top: 1px solid var(--border); background: var(--bg-card); }
+        .cart-totals  { margin-bottom: 16px; }
+        .total-row    { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.85rem; }
+        .total-row .label { color: var(--text-muted); }
+        .total-row .value { color: var(--text-secondary); font-weight: 500; font-family: 'Calibri','Candara','Segoe UI',sans-serif; }
+        .total-row.grand  { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; }
+        .total-row.grand .label { font-family: var(--font-display); font-size: 1rem; color: var(--text-primary); font-weight: 500; }
+        .total-row.grand .value { font-family: 'Calibri','Candara','Segoe UI',sans-serif; font-size: 1.4rem; color: var(--gold); font-weight: 600; }
+        .discount-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.8rem; color: var(--text-muted); }
+        .pay-btn { width: 100%; padding: 14px; font-size: 1rem; letter-spacing: 0.08em; font-weight: 600; }
+
+        .payment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .pay-method-btn { padding: 14px 10px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: transparent; color: var(--text-secondary); font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: var(--transition); }
+        .pay-method-btn:hover  { border-color: var(--gold); color: var(--gold); }
+        .pay-method-btn.active { border-color: var(--gold); background: var(--gold-glow); color: var(--gold); font-weight: 600; }
+
+        .change-display { background: var(--success-bg); border: 1px solid rgba(76,175,130,0.25); border-radius: var(--radius-sm); padding: 14px; text-align: center; margin-top: 12px; }
+        .change-display .change-label  { font-size: 0.75rem; color: var(--success); letter-spacing: 0.1em; text-transform: uppercase; }
+        .change-display .change-amount { font-family: 'Calibri','Candara','Segoe UI',sans-serif; font-size: 1.8rem; font-weight: 600; color: var(--success); }
+
+        .receipt-box { background: #fff; color: #111; border-radius: var(--radius-sm); padding: 24px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; max-height: 400px; overflow-y: auto; }
+        .receipt-box .r-title   { text-align: center; font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .receipt-box .r-sub     { text-align: center; font-size: 0.75rem; color: #555; margin-bottom: 4px; }
+        .receipt-box .r-divider { border: none; border-top: 1px dashed #ccc; margin: 8px 0; }
+        .receipt-box .r-row     { display: flex; justify-content: space-between; }
+        .receipt-box .r-total   { font-weight: 700; font-size: 0.95rem; }
+        .receipt-box .r-footer  { text-align: center; margin-top: 12px; font-size: 0.75rem; color: #555; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">KilaKitu</div>
+            <div class="brand-tagline">Point of Sale</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-page="dashboard">Dashboard</a>
+            <a href="pos.html"       class="nav-item active" data-page="pos">New Sale</a>
+            <div class="nav-section-label" style="margin-top:8px;">Management</div>
+            <a href="inventory.html" class="nav-item" data-page="inventory">Inventory</a>
+            <a href="products.html"  class="nav-item" data-page="products">Products</a>
+            <a href="reports.html"   class="nav-item" data-page="reports">Reports</a>
+            <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+            <a href="settings.html"  class="nav-item" data-page="settings">Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user" onclick="logout()">
+                <div class="user-avatar" id="sidebarAvatar">A</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUserName">Loading...</div>
+                    <div class="user-role" id="sidebarUserRole">—</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="page-title">New Sale</div>
+            <div class="flex-center gap-12">
+                <span id="topbarTime" style="font-family:'Calibri','Candara','Segoe UI',sans-serif;font-size:0.85rem;color:var(--text-muted);"></span>
+                <button class="btn btn-outline btn-sm" onclick="clearCart()">Clear Cart</button>
+            </div>
+        </div>
+
+        <div class="pos-layout">
+            <div class="products-panel">
+                <div class="products-toolbar">
+                    <input type="text" class="form-control" id="productSearch"
+                           placeholder="Search products..." oninput="filterProducts()"/>
+                    <div class="category-tabs" id="categoryTabs">
+                        <button class="cat-tab active" data-id="all" onclick="selectCategory('all', this)">All</button>
+                    </div>
+                </div>
+                <div class="products-grid-wrap">
+                    <div class="products-grid" id="productsGrid">
+                        <div style="grid-column:1/-1;text-align:center;padding:40px;">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cart-panel">
+                <div class="cart-header">
+                    <div class="cart-title">Cart</div>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <div class="cart-items" id="cartItems">
+                    <div class="cart-empty"><p>Tap a product to add it to cart</p></div>
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-totals">
+                        <div class="total-row">
+                            <span class="label">Subtotal</span>
+                            <span class="value" id="cartSubtotal">KES 0.00</span>
+                        </div>
+                        <div class="total-row" id="discountRow" style="display:none;">
+                            <span class="label">Discount</span>
+                            <span class="value text-danger" id="cartDiscount">- KES 0.00</span>
+                        </div>
+                        <div class="total-row grand">
+                            <span class="label">Total</span>
+                            <span class="value" id="cartTotal">KES 0.00</span>
+                        </div>
+                    </div>
+                    <div class="discount-row">
+                        <span>Discount (KES):</span>
+                        <input type="number" class="form-control" id="discountInput"
+                               placeholder="0" min="0" oninput="updateTotals()"
+                               style="width:100px;padding:6px 10px;font-size:0.82rem;"/>
+                    </div>
+                    <button class="btn btn-gold pay-btn" id="payBtn" onclick="openPaymentModal()" disabled>
+                        Charge Customer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay hidden" id="paymentModal">
+    <div class="modal" style="max-width:460px;">
+        <div class="modal-header">
+            <h3 class="font-display">Complete Payment</h3>
+            <button class="modal-close" onclick="closePaymentModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+                <div class="total-row">
+                    <span class="label">Items</span>
+                    <span class="value" id="modalItemCount">0</span>
+                </div>
+                <div class="total-row grand" style="margin-top:4px;">
+                    <span class="label">Amount Due</span>
+                    <span class="value" id="modalTotal">KES 0.00</span>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Payment Method</label>
+                <div class="payment-grid">
+                    <button class="pay-method-btn active" data-method="cash"  onclick="selectPayMethod(this)">Cash</button>
+                    <button class="pay-method-btn"        data-method="mpesa" onclick="selectPayMethod(this)">M-Pesa</button>
+                </div>
+            </div>
+            <div class="form-group" id="amountPaidGroup">
+                <label class="form-label">Amount Received (KES)</label>
+                <input type="number" class="form-control" id="amountPaid"
+                       placeholder="Enter amount" oninput="calcChange()"
+                       style="font-size:1.1rem;"/>
+            </div>
+            <div class="change-display hidden" id="changeDisplay">
+                <div class="change-label">Change to Give</div>
+                <div class="change-amount" id="changeAmount">KES 0.00</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn btn-gold" id="confirmPayBtn" onclick="confirmSale()">Confirm Sale</button>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal-overlay hidden" id="receiptModal">
+    <div class="modal" style="max-width:420px;">
+        <div class="modal-header">
+            <h3 class="font-display">Sale Complete</h3>
+            <button class="modal-close" onclick="closeReceiptModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <div class="receipt-box" id="receiptContent"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="printReceipt()">Print</button>
+            <button class="btn btn-gold"    onclick="closeReceiptModal()">New Sale</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/pos.js"></script>
+</body>
+</html>

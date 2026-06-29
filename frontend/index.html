@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>KilaKitu — Login</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: url('stationery.jfif') center center / cover no-repeat fixed;
+        }
+
+        /* Dark overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.50);
+            z-index: 0;
+        }
+
+        /* Single floating login box */
+        .login-box {
+            position: relative;
+            z-index: 10;
+            width: 50%;
+            max-width: 570px;
+            background: rgba(28, 28, 28, 0.90);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(64, 224, 208, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 48px 44px;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+        }
+
+        /* Top gradient line */
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            background: linear-gradient(to right, var(--fuchsia), var(--gold));
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .login-brand .brand-name {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .login-tagline {
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.12em;
+            margin-bottom: 32px;
+        }
+
+        .login-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .login-form .form-group { margin-bottom: 20px; }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 0.95rem;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            margin-top: 8px;
+            justify-content: center;
+        }
+
+        .login-error {
+            background: var(--danger-bg);
+            border: 1px solid rgba(224,92,92,0.3);
+            border-radius: var(--radius-sm);
+            color: var(--danger);
+            font-size: 0.82rem;
+            padding: 10px 14px;
+            margin-top: 12px;
+            display: none;
+            text-align: center;
+        }
+
+        .login-footer {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+        }
+
+        @media (max-width: 480px) {
+            .login-box { padding: 36px 24px; margin: 0 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+
+    <div class="login-brand">
+        <span class="brand-name">KilaKitu</span>
+        <div class="brand-tagline">Point of Sale System</div>
+    </div>
+
+    <div class="login-title">Sign in to your account</div>
+
+    <div class="login-form">
+        <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" id="username"
+                   placeholder="Enter your username"
+                   autocomplete="username"/>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" id="password"
+                   placeholder="Enter your password"
+                   autocomplete="current-password"/>
+        </div>
+
+        <button class="btn btn-gold login-btn" id="loginBtn" onclick="handleLogin()">
+            Sign In
+        </button>
+
+        <div class="login-error" id="loginError">
+            Incorrect username or password. Please try again.
+        </div>
+    </div>
+
+    <div class="login-footer">
+        KilaKitu POS &nbsp;·&nbsp; Nairobi, Kenya
+    </div>
+
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleLogin();
+    });
+
+    async function handleLogin() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const btn      = document.getElementById('loginBtn');
+        const errEl    = document.getElementById('loginError');
+
+        if (!username || !password) {
+            errEl.textContent   = 'Please enter both username and password.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        btn.disabled    = true;
+        btn.textContent = 'Signing in...';
+        errEl.style.display = 'none';
+
+        try {
+            const res  = await fetch('/api/auth/login', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.token) {
+                localStorage.setItem('kk_token', data.token);
+                localStorage.setItem('kk_user',  JSON.stringify(data.user));
+                window.location.replace('dashboard.html');
+            } else {
+                errEl.textContent   = data.message || 'Incorrect username or password.';
+                errEl.style.display = 'block';
+                btn.disabled        = false;
+                btn.textContent     = 'Sign In';
+            }
+        } catch {
+            errEl.textContent   = 'Cannot connect to server. Make sure it is running.';
+            errEl.style.display = 'block';
+            btn.disabled        = false;
+            btn.textContent     = 'Sign In';
+        }
+    }
+</script>
+</body>
+</html>

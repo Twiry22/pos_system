@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>KilaKitu — Products</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style>
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-bar input { flex: 1; min-width: 200px; }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .product-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .summary-cards      { grid-template-columns: repeat(2,1fr); }
+            .product-form-grid  { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-name">KilaKitu</div>
+            <div class="brand-tagline">Point of Sale</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="pos.html"       class="nav-item">New Sale</a>
+            <div class="nav-section-label" style="margin-top:8px;">Management</div>
+            <a href="inventory.html" class="nav-item">Inventory</a>
+            <a href="products.html"  class="nav-item active">Products</a>
+            <a href="reports.html"   class="nav-item">Reports</a>
+            <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+            <a href="settings.html"  class="nav-item">Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user" onclick="logout()">
+                <div class="user-avatar" id="sidebarAvatar">A</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUserName">Loading...</div>
+                    <div class="user-role" id="sidebarUserRole">—</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="page-title">Products</div>
+            <div class="flex-center gap-12">
+                <button class="btn btn-outline btn-sm" onclick="openCategoryModal()">Manage Categories</button>
+                <button class="btn btn-gold btn-sm"    onclick="openProductModal()">+ Add Product</button>
+            </div>
+        </div>
+
+        <div class="page-content page-fade">
+
+            <!-- Summary -->
+            <div class="summary-cards" id="summaryCards">
+                <div class="stat-card skeleton" style="height:100px;"></div>
+                <div class="stat-card skeleton" style="height:100px;"></div>
+                <div class="stat-card skeleton" style="height:100px;"></div>
+                <div class="stat-card skeleton" style="height:100px;"></div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-bar">
+                <input type="text" class="form-control" id="productSearch"
+                       placeholder="Search products..." oninput="filterProducts()"/>
+                <select class="form-control" id="catFilter" onchange="filterProducts()"
+                        style="width:180px;">
+                    <option value="all">All Categories</option>
+                </select>
+                <select class="form-control" id="statusFilter" onchange="filterProducts()"
+                        style="width:140px;">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <!-- Table -->
+            <div class="card" style="padding:0;">
+                <div class="table-wrap" id="productsTableWrap">
+                    <div class="text-center" style="padding:60px;">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Add / Edit Product Modal -->
+<div class="modal-overlay hidden" id="productModal">
+    <div class="modal" style="max-width:540px;">
+        <div class="modal-header">
+            <h3 class="font-display" id="productModalTitle">Add Product</h3>
+            <button class="modal-close" onclick="closeProductModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="productId"/>
+            <div class="product-form-grid">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-control" id="productName" placeholder="e.g. Ballpoint Pen (blue)"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-control" id="productCategory">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unit</label>
+                    <select class="form-control" id="productUnit">
+                        <option value="piece">Piece</option>
+                        <option value="pack">Pack</option>
+                        <option value="pair">Pair</option>
+                        <option value="bottle">Bottle</option>
+                        <option value="can">Can</option>
+                        <option value="bag">Bag</option>
+                        <option value="box">Box</option>
+                        <option value="ream">Ream</option>
+                        <option value="kg">Kg</option>
+                        <option value="bunch">Bunch</option>
+                        <option value="tin">Tin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Buying Price (KES)</label>
+                    <input type="number" class="form-control" id="productBuyPrice"
+                           placeholder="Cost price" min="0" step="0.01"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Selling Price (KES)</label>
+                    <input type="number" class="form-control" id="productSellPrice"
+                           placeholder="Selling price" min="0" step="0.01"/>
+                </div>
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Description (optional)</label>
+                    <input type="text" class="form-control" id="productDesc"
+                           placeholder="Short description"/>
+                </div>
+                <div class="form-group" id="productStatusGroup" style="grid-column:1/-1;display:none;">
+                    <label class="form-label">Status</label>
+                    <select class="form-control" id="productStatus">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Profit preview -->
+            <div id="profitPreview" style="margin-top:16px;background:var(--bg-secondary);
+                 border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;
+                 display:none;">
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;
+                            text-transform:uppercase;letter-spacing:0.1em;">Profit per unit</div>
+                <div id="profitAmount" style="font-family:'Calibri','Candara','Segoe UI',sans-serif;
+                     font-size:1.4rem;font-weight:700;color:var(--success);">KES 0.00</div>
+                <div id="profitMargin"  style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">0% margin</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+            <button class="btn btn-gold"    onclick="saveProduct()" id="saveProductBtn">Save Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- Category Management Modal -->
+<div class="modal-overlay hidden" id="categoryModal">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3 class="font-display">Manage Categories</h3>
+            <button class="modal-close" onclick="closeCategoryModal()">x</button>
+        </div>
+        <div class="modal-body">
+            <!-- Add category -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border);
+                        border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+                <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;
+                            color:var(--gold);margin-bottom:12px;font-weight:600;">Add New Category</div>
+                <div style="display:grid;grid-template-columns:1fr 80px;gap:10px;margin-bottom:10px;">
+                    <input type="text"  class="form-control" id="newCatName"  placeholder="Category name"/>
+                    <input type="text"  class="form-control" id="newCatColor" placeholder="#4A90D9"
+                           style="font-size:0.8rem;"/>
+                </div>
+                <button class="btn btn-gold btn-sm btn-full" onclick="addCategory()">Add Category</button>
+            </div>
+
+            <!-- Existing categories -->
+            <div id="categoriesList">
+                <div class="text-center" style="padding:20px;"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/products.js"></script>
+</body>
+</html>
