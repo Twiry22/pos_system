@@ -1,4 +1,4 @@
-# KilaKitu POS — Point of Sale System
+# KilaKitu POS 
 
 A full-featured, web-based Point of Sale system built for **KilaKitu Shop, Nairobi, Kenya**.
 Designed for small to medium retail shops managing multiple product categories, staff, inventory and sales reporting — all from a browser.
